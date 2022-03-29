@@ -16,6 +16,7 @@ registration = ['Yes', 'No']
 registration_dict = {'No': 0, 'Yes': 1}
 
 saved_model = pickle.load(open('price_model.pickle','rb'))
+saved_model = pickle.load(open('price_model.pickle','rb'))
 cars_price_model = saved_model['model']
 scaler = saved_model['scaler']
 
@@ -71,8 +72,8 @@ st.header('About')
 about = """
             This Machine Learning application uses a Random Forest Regressor to estimate the appropriate price for a used car based on past deals and sales.
             The app handles 7 brands.
-            The dataset used to train the model can be found here - https://github.com/Abhishek-Dxt/ML_Regression/blob/master/used_cars_data.csv \n
-            The entire project can be accessed on my GitHub - https://github.com/Abhishek-Dxt/ML_Regression \n
+            The dataset used to train the model can be found here - https://github.com/Abhishek-Dxt/Car-Bazaar/blob/master/used_cars_data.csv \n
+            The entire project can be accessed on my GitHub - https://github.com/Abhishek-Dxt/Car-Bazaar \n
             Check my other projects and contact details at - https://abhishek-dxt.github.io/
 """
 st.write(about)
