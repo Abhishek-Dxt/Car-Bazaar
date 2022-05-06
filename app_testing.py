@@ -1,7 +1,40 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
-import pickle
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+
+used_cars_data = pd.read_csv('used_cars_data.csv')
+data_sans_unimp = used_cars_data.drop(['Model'],axis=1)
+data_sans_missingval = data_sans_unimp.dropna(axis=0)
+one_p_mark = data_sans_missingval['Price'].quantile(0.99)
+data_1 = data_sans_missingval[data_sans_missingval['Price']<one_p_mark]
+one_p_mark = data_1['Mileage'].quantile(0.99)
+data_2 = data_1[data_1['Mileage']<one_p_mark]
+data_3 = data_2[data_2['EngineV']<6.5]
+old_one_p = data_3['Year'].quantile(0.01)
+data_4 = data_3[data_3['Year']>old_one_p]
+data_cleaned = data_4.reset_index(drop=True)
+log_price = np.log(data_cleaned['Price'])
+data_cleaned['log_price'] = log_price
+data_cleaned = data_cleaned.drop(['Price'],axis=1)
+data = data_cleaned
+le = LabelEncoder()
+data['Brand_encoding'] = le.fit_transform(data['Brand'])
+data['Body_encoding'] = le.fit_transform(data['Body'])
+data['Engine_Type_encoding'] = le.fit_transform(data['Engine Type'])
+data['Reg_enc'] = le.fit_transform(data['Registration'])
+data_preprocessed = data.drop(['Brand', 'Body', 'Engine Type', 'Registration'], axis=1)
+targets = data_preprocessed['log_price']
+inputs = data_preprocessed.drop(['log_price'],axis=1)
+scaler = StandardScaler()
+scaler.fit(inputs)
+scaled_inputs = scaler.transform(inputs)
+x_train, x_test, y_train, y_test = train_test_split(scaled_inputs, targets, test_size=0.2, random_state=365)
+rf = RandomForestRegressor()
+rf.fit(x_train,y_train)
 
 brands = ['Audi', 'BMW', 'Mercedes-Benz', 'Mitsubishi', 'Renault', 'Toyota', 'Volkswagen']
 brand_dict = {'Audi': 0, 'BMW': 1, 'Mercedes-Benz': 2, 'Mitsubishi': 3, 'Renault': 4, 'Toyota': 5, 'Volkswagen': 6}
@@ -15,10 +48,7 @@ engine_type_dict = {'Diesel': 0, 'Gas': 1, 'Other': 2, 'Petrol': 3}
 registration = ['Yes', 'No']
 registration_dict = {'No': 0, 'Yes': 1}
 
-saved_model = pickle.load(open('price_model.pickle','rb'))
-saved_model = pickle.load(open('price_model.pickle','rb'))
-cars_price_model = saved_model['model']
-scaler = saved_model['scaler']
+
 
 st.set_page_config(page_title='Car Bazaar')
 st.markdown("<h1 style='font-family:georgia; text-align: center; color:#D42F0B' > Car Bazaar </h1>", unsafe_allow_html=True)
@@ -61,7 +91,7 @@ predict = col8.button('Estimate')
 
 if predict:
     try:
-        y_pred = cars_price_model.predict(user_input_scaled)
+        y_pred = rf.predict(user_input_scaled)
         y_pred = round(float(np.exp(y_pred)))
         out = 'Based on 4000+ real-world sales, the estimated price for above car is $ '+ str(y_pred) + '.'
         st.success(out)
